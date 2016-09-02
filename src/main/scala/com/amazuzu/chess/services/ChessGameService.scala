@@ -10,45 +10,41 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
 
   case class GameUncompleted(val resolved: Figures, rest: Row) extends Game {
 
-    //println(s"uncompl $resolved $rest")
-
     override def variants(): Stream[Figures] = rest match {
       case h :: Nil => runSafelyThroughDesk(h) { p =>
         val game = GameCompleted(Figure(p, h) :: resolved)
         game.resolved #:: game.variants()
       }
 
-      case Nil => resolved #:: empty
-
       case h :: tail => runSafelyThroughDesk(h) { p =>
         GameUncompleted(Figure(p, h) :: resolved, tail).variants()
       }
 
+      case Nil => resolved #:: empty
     }
 
   }
 
   case class GameCompleted(val resolved: Figures) extends Game {
 
-    //println(s"compl $resolved")
-
-    override def variants(): Stream[Figures] = runThroughDesk(p =>
+    override def variants(): Stream[Figures] = runThroughDesk(resolved.last.loc)(p =>
       GameUncompleted(Figure(p, figures.head) :: Nil, figures.tail).variants()
     )
   }
 
 
   def variants(): Stream[Figures] = if (figures.isEmpty) Nil #:: empty
-  else GameUncompleted(Figure(Point.Zero, figures.head) :: Nil, figures.tail).variants()
+  else GameCompleted(figures.map(Figure(Point.BeforeZero, _))).variants()
+
 
   sealed trait Game {
+
     def variants(): Stream[Figures]
 
     def resolved: Figures
 
-
-    def runThroughDesk(closure: Point => Stream[Figures]) = {
-      var cursor = resolved.last.loc
+    def runThroughDesk(startPoint: Point)(closure: Point => Stream[Figures]) = {
+      var cursor = startPoint
 
       Stream.continually {
         cursor = nextStep(cursor)
@@ -56,8 +52,9 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
       }.takeWhile(isValid(_)).map(closure(_)).flatten
     }
 
+
     def runSafelyThroughDesk(newFigure: E)(closure: Point => Stream[Figures]): Stream[Figures] = {
-      var ocursor: Option[Point] = Some(resolved.last.loc)
+      var ocursor: Option[Point] = Some(resolved.head.loc)
 
       Stream.continually {
         ocursor = findNextSafeLocation(ocursor.get, newFigure)
@@ -93,6 +90,7 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
     protected def isValid(p: Point) = p.y < N
 
   }
+
 
   def draw(figures: Figures) = {
     println(figures.mkString(" "))

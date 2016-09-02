@@ -21,7 +21,7 @@ class ChessGameSpec extends Specification {
       val chess = ChessGameService(3, 2, List('N', 'Q'))
       val result = chess.variants().toSet
 
-      result.map(_.toSet) === Set(
+      result.size === 2 && result.map(_.toSet) === Set(
         Set(Figure(Point(2, 1), 'Q'), Figure(Point(0, 0), 'N')),
         Set(Figure(Point(0, 1), 'Q'), Figure(Point(2, 0), 'N'))
       )
@@ -31,9 +31,7 @@ class ChessGameSpec extends Specification {
       val chess = ChessGameService(3, 3, List('N', 'R', 'N'))
       val result = chess.variants().toSet
 
-      result.map(chess.draw)
-
-      result.map(_.toSet) === Set(
+      result.size === 2 && result.map(_.toSet) === Set(
         Set(Figure(Point(0, 0), 'N'), Figure(Point(2, 1), 'R'), Figure(Point(0, 2), 'N')),
         Set(Figure(Point(2, 0), 'N'), Figure(Point(0, 1), 'R'), Figure(Point(2, 2), 'N'))
       )
@@ -43,10 +41,28 @@ class ChessGameSpec extends Specification {
       val chess = ChessGameService(3, 3, List('R', 'N', 'N'))
       val result = chess.variants().toSet
 
-      result.map(chess.draw)
-
-      result.map(_.toSet) === Set(
+      result.size === 1 && result.map(_.toSet) === Set(
         Set(Figure(Point(1, 0), 'R'), Figure(Point(0, 2), 'N'), Figure(Point(2, 2), 'N'))
+      )
+    }
+
+    "give 4 results for 3x3 desk, 2 kings and 1 rook, case N N R" in {
+      val chess = ChessGameService(3, 3, List('N', 'N', 'R'))
+      val result = chess.variants().toSet
+
+      result.size === 1 && result.map(_.toSet) === Set(
+        Set(Figure(Point(1, 2), 'R'), Figure(Point(2, 0), 'N'), Figure(Point(0, 0), 'N'))
+      )
+    }
+
+    "give 3 results for 4x1 desk, 2 kings" in {
+      val chess = ChessGameService(4, 1, List('N', 'N'))
+      val result = chess.variants().toSet
+
+      result.size === 3 && result.map(_.toSet) === Set(
+        Set(Figure(Point(0, 0), 'N'), Figure(Point(2, 0), 'N')),
+        Set(Figure(Point(0, 0), 'N'), Figure(Point(3, 0), 'N')),
+        Set(Figure(Point(1, 0), 'N'), Figure(Point(3, 0), 'N'))
       )
     }
   }

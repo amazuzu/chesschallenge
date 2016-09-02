@@ -14,6 +14,7 @@ package object chess {
 
   object Point {
     val Zero = new Point(0, 0)
+    val BeforeZero = new Point(-1, 0) //the point before first: Zero = nextStep(BeforeZero)
   }
 
   case class Figure(loc: Point, f: E)
