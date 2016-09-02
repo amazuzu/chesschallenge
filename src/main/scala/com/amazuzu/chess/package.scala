@@ -8,9 +8,17 @@ package object chess {
   type Row = List[E]
   type Bracket = (Row, E, Row)
 
-  class Point(var x: Int, var y: Int)
+  case class Point(x: Int, y: Int) {
+    override def toString: String = s"($x,$y)"
+  }
 
-  case class Figure(x: Int, y: Int, f: E)
+  object Point {
+    val Zero = new Point(0, 0)
+  }
+
+  case class Figure(loc: Point, f: E)
 
   type Figures = List[Figure]
+
+
 }
