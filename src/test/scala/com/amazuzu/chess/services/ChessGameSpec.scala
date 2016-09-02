@@ -17,19 +17,37 @@ class ChessGameSpec extends Specification {
       ChessGameService(1, 1, List()).variants().toList === List(Nil)
     }
 
-    "give 2 result for 3x2 desk and 2 kings" in {
+    "give 2 results for 3x2 desk and 2 kings" in {
       val chess = ChessGameService(3, 2, List('N', 'Q'))
       val result = chess.variants().toSet
 
+      result.map(_.toSet) === Set(
+        Set(Figure(Point(2, 1), 'Q'), Figure(Point(0, 0), 'N')),
+        Set(Figure(Point(0, 1), 'Q'), Figure(Point(2, 0), 'N'))
+      )
+    }
+
+    "give 4 results for 3x3 desk, 2 kings and 1 rook, case N R N" in {
+      val chess = ChessGameService(3, 3, List('N', 'R', 'N'))
+      val result = chess.variants().toSet
 
       result.map(chess.draw)
-      //chess.draw(result.head)
 
-       result === Set(
-        List(Figure(Point(2, 1), 'Q'), Figure(Point(0, 0), 'N')),
-        List(Figure(Point(0, 1), 'Q'), Figure(Point(2, 0), 'N'))
+      result.map(_.toSet) === Set(
+        Set(Figure(Point(0, 0), 'N'), Figure(Point(2, 1), 'R'), Figure(Point(0, 2), 'N')),
+        Set(Figure(Point(2, 0), 'N'), Figure(Point(0, 1), 'R'), Figure(Point(2, 2), 'N'))
       )
+    }
 
+    "give 4 results for 3x3 desk, 2 kings and 1 rook, case R N N" in {
+      val chess = ChessGameService(3, 3, List('R', 'N', 'N'))
+      val result = chess.variants().toSet
+
+      result.map(chess.draw)
+
+      result.map(_.toSet) === Set(
+        Set(Figure(Point(1, 0), 'R'), Figure(Point(0, 2), 'N'), Figure(Point(2, 2), 'N'))
+      )
     }
   }
 }

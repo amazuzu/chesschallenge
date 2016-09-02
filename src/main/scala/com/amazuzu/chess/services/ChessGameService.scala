@@ -10,44 +10,31 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
 
   case class GameUncompleted(val resolved: Figures, rest: Row) extends Game {
 
-    println(s"uncompl $resolved $rest")
+    //println(s"uncompl $resolved $rest")
 
     override def variants(): Stream[Figures] = rest match {
-      case h :: Nil => findNextSafeLocation(h) match {
-        case Some(p) =>
-          val game = GameCompleted(Figure(p, h) :: resolved)
-          game.resolved #:: game.variants()
-        case _ => empty
+      case h :: Nil => runSafelyThroughDesk(h) { p =>
+        val game = GameCompleted(Figure(p, h) :: resolved)
+        game.resolved #:: game.variants()
       }
 
       case Nil => resolved #:: empty
 
-      case h :: tail => findNextSafeLocation(h) match {
-        case Some(p) => GameUncompleted(Figure(p, h) :: resolved, tail).variants()
-        case _ => empty
+      case h :: tail => runSafelyThroughDesk(h) { p =>
+        GameUncompleted(Figure(p, h) :: resolved, tail).variants()
       }
+
     }
 
   }
 
   case class GameCompleted(val resolved: Figures) extends Game {
 
-    println(s"compl $resolved")
+    //println(s"compl $resolved")
 
-    override def variants(): Stream[Figures] = moveFirstFigureTillEnd()
-
-    def moveFirstFigureTillEnd() = {
-
-      var cursor = resolved.last.loc
-
-      Stream.continually {
-        cursor = nextStep(cursor)
-        cursor
-      }.takeWhile(isValid(_)).map(p =>
-        GameUncompleted(Figure(p, figures.head) :: Nil, figures.tail).variants()
-      ).flatten
-
-    }
+    override def variants(): Stream[Figures] = runThroughDesk(p =>
+      GameUncompleted(Figure(p, figures.head) :: Nil, figures.tail).variants()
+    )
   }
 
 
@@ -59,12 +46,29 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
 
     def resolved: Figures
 
-    protected def findNextSafeLocation(newFigure: E): Option[Point] = {
-      var p = nextStep(resolved.head.loc)
+
+    def runThroughDesk(closure: Point => Stream[Figures]) = {
+      var cursor = resolved.last.loc
+
+      Stream.continually {
+        cursor = nextStep(cursor)
+        cursor
+      }.takeWhile(isValid(_)).map(closure(_)).flatten
+    }
+
+    def runSafelyThroughDesk(newFigure: E)(closure: Point => Stream[Figures]): Stream[Figures] = {
+      var ocursor: Option[Point] = Some(resolved.last.loc)
+
+      Stream.continually {
+        ocursor = findNextSafeLocation(ocursor.get, newFigure)
+        ocursor
+      }.takeWhile(_.isDefined).map(oc => closure(oc.get)).flatten
+    }
+
+    protected def findNextSafeLocation(startPoint: Point, newFigure: E): Option[Point] = {
+      var p = nextStep(startPoint)
 
       while (isValid(p) && !isSafeLocation(p, Figure(p, newFigure))) p = nextStep(p)
-
-      //println(s"next safe $p")
 
       if (isValid(p)) Some(p) else None
     }
@@ -94,10 +98,10 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
     println(figures.mkString(" "))
     for (y <- (N - 1 to(0, -1))) {
       println((0 until M).map(x =>
-        figures.find(_.loc == Point(x, y)).map(" "+_.f.toString).getOrElse("  ")
+        figures.find(_.loc == Point(x, y)).map(" " + _.f.toString).getOrElse("  ")
       ).mkString(y.toString, "", ""))
     }
-    println((0 until M).map(" "+_.toString).mkString(" ", "", ""))
+    println((0 until M).map(" " + _.toString).mkString(" ", "", ""))
   }
 
 }
