@@ -46,5 +46,12 @@ class PermutationSpec extends Specification {
 
       list.length === list.toSet.size
     }
+
+    "return unique elements if dublicates exists 2" in {
+      val stream = permutationsDubl(List('N', 'N', 'Q', 'Q', 'B', 'B', 'K'))
+      val list = stream.toList
+
+      list.length === list.toSet.size
+    }
   }
 }

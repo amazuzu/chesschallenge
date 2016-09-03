@@ -6,7 +6,7 @@ import org.specs2.mutable.Specification
 /**
   * Created by taras on 9/2/16.
   */
-class ChessGameSpec extends Specification with FiguresCheck{
+class ChessGameSpec extends Specification with FiguresCheck {
   "chess game service" should {
 
     "give 1 result for 1x1 desk and 1 figure" in {
@@ -64,6 +64,13 @@ class ChessGameSpec extends Specification with FiguresCheck{
         Set(Figure(Point(0, 0), 'N'), Figure(Point(3, 0), 'N')),
         Set(Figure(Point(1, 0), 'N'), Figure(Point(3, 0), 'N'))
       )
+    }
+
+    "give correct results on 3x2 and 2 kings case" in {
+      val chess = ChessGameService(3, 2, List('N', 'N'))
+      val variants = chess.variants()
+
+      variants.toList.groupBy(identity).collect { case (x, List(_, _, _*)) => x }.isEmpty
     }
 
   }

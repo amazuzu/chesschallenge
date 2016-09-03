@@ -1,7 +1,8 @@
 package com.amazuzu.chess.services
 
 import com.amazuzu.chess._
-import Stream._
+
+import scala.Stream._
 
 /**
   * Created by taras on 9/2/16.
@@ -11,21 +12,14 @@ case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
   case class GameUncompleted(resolved: Figures, rest: Row) extends Game {
 
     override def variants(): Stream[Figures] = rest match {
-      case h :: Nil => runSafelyThroughDesk(h) { p =>
-        val game = GameCompleted(Figure(p, h) :: resolved)
-        game.resolved #:: game.variants()
-      }
-
-      case h :: tail => runSafelyThroughDesk(h) { p =>
-        GameUncompleted(Figure(p, h) :: resolved, tail).variants()
-      }
-
+      case h :: Nil => runSafelyThroughDesk(h)(p => (Figure(p, h) :: resolved) #:: empty)
+      case h :: tail => runSafelyThroughDesk(h)(p => GameUncompleted(Figure(p, h) :: resolved, tail).variants())
       case Nil => resolved #:: empty
     }
 
   }
 
-  case class GameCompleted(val resolved: Figures) extends Game {
+  case class GameCompleted(resolved: Figures) extends Game {
 
     override def variants(): Stream[Figures] = runThroughDesk(resolved.head.loc)(p =>
       GameUncompleted(Figure(p, figures.head) :: Nil, figures.tail).variants()
@@ -33,7 +27,7 @@ case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
   }
 
 
-  def variants(): Stream[Figures] = if (figures.isEmpty) Nil #:: empty
+  def variants() = if (figures.isEmpty) Nil #:: empty
   else GameCompleted(figures.map(Figure(Point.BeforeZero, _))).variants()
 
 
@@ -43,7 +37,7 @@ case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
 
     def resolved: Figures
 
-    def runThroughDesk(startPoint: Point)(closure: Point => Stream[Figures]) = {
+    protected def runThroughDesk(startPoint: Point)(closure: Point => Stream[Figures]) = {
       var cursor = startPoint
 
       Stream.continually {
@@ -53,7 +47,7 @@ case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
     }
 
 
-    def runSafelyThroughDesk(newFigure: E)(closure: Point => Stream[Figures]): Stream[Figures] = {
+    protected def runSafelyThroughDesk(newFigure: E)(closure: Point => Stream[Figures]) = {
       var ocursor: Option[Point] = Some(resolved.head.loc)
 
       Stream.continually {
@@ -62,30 +56,30 @@ case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
       }.takeWhile(_.isDefined).map(oc => closure(oc.get)).flatten
     }
 
-    protected def findNextSafeLocation(startPoint: Point, newFigure: E): Option[Point] = {
+    protected def findNextSafeLocation(startPoint: Point, newFigure: E) = {
       var p = nextStep(startPoint)
-
-      while (isValid(p) && !isSafeLocation(p, Figure(p, newFigure))) p = nextStep(p)
-
+      while (isValid(p) && !isSafeLocation(p, newFigure)) p = nextStep(p)
       if (isValid(p)) Some(p) else None
     }
 
+    private def isMutuallySafe(a: Point, f: E, b: Point, g: E) = {
+      val dx = Math.abs(a.x - b.x)
+      val dy = Math.abs(a.y - b.y)
 
-    private def isSafePointAgainstFigure(p: Point, f: Figure) = f match {
-      case Figure(Point(x, y), 'N') => Math.abs(x - p.x) > 1 || Math.abs(y - p.y) > 1
-      case Figure(Point(x, y), 'Q') => x != p.x && y != p.y && Math.abs(x - p.x) != Math.abs(y - p.y)
-      case Figure(Point(x, y), 'B') => Math.abs(x - p.x) != Math.abs(y - p.y)
-      case Figure(Point(x, y), 'R') => x != p.x && y != p.y
-      case Figure(Point(x, y), 'K') => !(Math.abs(x - p.x) == 1 && Math.abs(y - p.y) == 2 || Math.abs(x - p.x) == 2 && Math.abs(y - p.y) == 1)
+      def safe(el: E) = el match {
+        case 'N' => dx > 1 || dy > 1
+        case 'Q' => a.x != b.x && a.y != b.y && dx != dy
+        case 'B' => dx != dy
+        case 'R' => a.x != b.x && a.y != b.y
+        case 'K' => !(dx == 1 && dy == 2 || dx == 2 && dy == 1)
+      }
+
+      safe(f) && safe(g)
     }
 
-    protected def isSafeLocation(p: Point, g: Figure): Boolean = resolved.forall(f => isSafePointAgainstFigure(p, f) && isSafePointAgainstFigure(f.loc, g))
+    protected def isSafeLocation(p: Point, e: E) = resolved.forall(o => isMutuallySafe(p, e, o.loc, o.f))
 
-    protected def nextStep(p: Point): Point = {
-      val clonep = p.copy(x = p.x + 1)
-
-      if (clonep.x >= M) clonep.copy(x = 0, y = clonep.y + 1) else clonep
-    }
+    protected def nextStep(p: Point) = if (p.x + 1 >= M) p.copy(x = 0, y = p.y + 1) else p.copy(x = p.x + 1)
 
     protected def isValid(p: Point) = p.y < N
 

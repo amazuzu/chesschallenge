@@ -22,3 +22,12 @@ trait Printable {
     println((0 until M).map(" " + _.toString).mkString(" ", "", ""))
   }
 }
+
+object Printable {
+  def apply(_M: Int, _N: Int)(figures: Figures) = new Printable {
+    val M = _M
+    val N = _N
+
+    print(figures)
+  }
+}

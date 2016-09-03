@@ -18,6 +18,3 @@ case class ChessBoard(M: Int, N: Int, figures: Row) extends Printable {
 
 }
 
-object ChessApp extends App {
-  ChessBoard(4, 4, List('R', 'R', 'K', 'K', 'K', 'K')).runNDraw
-}
