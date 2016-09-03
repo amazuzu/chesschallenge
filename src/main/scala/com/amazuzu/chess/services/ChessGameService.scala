@@ -6,9 +6,9 @@ import Stream._
 /**
   * Created by taras on 9/2/16.
   */
-case class ChessGameService(M: Int, N: Int, figures: Row) {
+case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
 
-  case class GameUncompleted(val resolved: Figures, rest: Row) extends Game {
+  case class GameUncompleted(resolved: Figures, rest: Row) extends Game {
 
     override def variants(): Stream[Figures] = rest match {
       case h :: Nil => runSafelyThroughDesk(h) { p =>
@@ -27,7 +27,7 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
 
   case class GameCompleted(val resolved: Figures) extends Game {
 
-    override def variants(): Stream[Figures] = runThroughDesk(resolved.last.loc)(p =>
+    override def variants(): Stream[Figures] = runThroughDesk(resolved.head.loc)(p =>
       GameUncompleted(Figure(p, figures.head) :: Nil, figures.tail).variants()
     )
   }
@@ -76,7 +76,7 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
       case Figure(Point(x, y), 'Q') => x != p.x && y != p.y && Math.abs(x - p.x) != Math.abs(y - p.y)
       case Figure(Point(x, y), 'B') => Math.abs(x - p.x) != Math.abs(y - p.y)
       case Figure(Point(x, y), 'R') => x != p.x && y != p.y
-      case Figure(Point(x, y), 'K') => !(Math.abs(x - p.x) == 2 && Math.abs(y - p.y) == 3 || Math.abs(x - p.x) == 3 && Math.abs(y - p.y) == 2)
+      case Figure(Point(x, y), 'K') => !(Math.abs(x - p.x) == 1 && Math.abs(y - p.y) == 2 || Math.abs(x - p.x) == 2 && Math.abs(y - p.y) == 1)
     }
 
     protected def isSafeLocation(p: Point, g: Figure): Boolean = resolved.forall(f => isSafePointAgainstFigure(p, f) && isSafePointAgainstFigure(f.loc, g))
@@ -91,15 +91,5 @@ case class ChessGameService(M: Int, N: Int, figures: Row) {
 
   }
 
-
-  def draw(figures: Figures) = {
-    println(figures.mkString(" "))
-    for (y <- (N - 1 to(0, -1))) {
-      println((0 until M).map(x =>
-        figures.find(_.loc == Point(x, y)).map(" " + _.f.toString).getOrElse("  ")
-      ).mkString(y.toString, "", ""))
-    }
-    println((0 until M).map(" " + _.toString).mkString(" ", "", ""))
-  }
 
 }

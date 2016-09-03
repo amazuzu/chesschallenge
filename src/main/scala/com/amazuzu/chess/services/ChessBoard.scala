@@ -6,14 +6,18 @@ import PermutationService._
 /**
   * Created by taras on 9/1/16.
   */
-case class ChessBoard(M: Int, N: Int, figures: Row) {
+case class ChessBoard(M: Int, N: Int, figures: Row) extends Printable {
 
-  val perms = permutationsDubl(figures)
+  def variants = permutationsDubl(figures).map(perm =>
+    ChessGameService(M, N, perm).variants()
+  ).flatten
 
-  def game = perms.map { figures =>
-
-      //ConcreteGame(M, N, figures).variants
-
+  def runNDraw = variants.toList.foreach { result =>
+    print(result)
   }
 
+}
+
+object ChessApp extends App {
+  ChessBoard(4, 4, List('R', 'R', 'K', 'K', 'K', 'K')).runNDraw
 }
