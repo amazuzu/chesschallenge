@@ -22,15 +22,15 @@ object Main extends App {
 
         val list = ChessBoard(m, n, figures).variants.toList
 
-        println(list.length + " variants in " + Math.round((System.currentTimeMillis() - start) / 1000.0) + "ms")
+        println(list.length + " variants in " + Math.round((System.currentTimeMillis() - start) / 1000.0) + " seconds")
 
-      } else usage("wrong figures set")
+      } else usage(s"wrong figures set '${args(1)}'")
 
 
-    } else usage("wrong board dimension")
+    } else usage(s"wrong board dimension '${args(0)}'")
 
   }
 
-  def usage(msg: String) = println(s"""usage: sbt "run 7x7 NNQQBBK"\nerror $msg """)
+  def usage(msg: String) = println(s"""usage: sbt "run 7x7 NNQQBBK"\nerror: $msg """)
 
 }

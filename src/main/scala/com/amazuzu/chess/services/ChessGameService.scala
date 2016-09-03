@@ -38,22 +38,20 @@ case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
     def resolved: Figures
 
     protected def runThroughDesk(startPoint: Point)(closure: Point => Stream[Figures]) = {
-      var cursor = startPoint
+      def next(cursor: Point): Stream[Figures] =
+        if (isValid(cursor)) closure(cursor) #::: next(nextStep(cursor)) else empty
 
-      Stream.continually {
-        cursor = nextStep(cursor)
-        cursor
-      }.takeWhile(isValid(_)).map(closure(_)).flatten
+      next(nextStep(startPoint))
     }
 
 
     protected def runSafelyThroughDesk(newFigure: E)(closure: Point => Stream[Figures]) = {
-      var ocursor: Option[Point] = Some(resolved.head.loc)
+      def next(ocursor: Option[Point]): Stream[Figures] = ocursor match {
+        case Some(cursor) => closure(cursor) #::: next(findNextSafeLocation(cursor, newFigure))
+        case _ => empty
+      }
 
-      Stream.continually {
-        ocursor = findNextSafeLocation(ocursor.get, newFigure)
-        ocursor
-      }.takeWhile(_.isDefined).map(oc => closure(oc.get)).flatten
+      next(findNextSafeLocation(resolved.head.loc, newFigure))
     }
 
     protected def findNextSafeLocation(startPoint: Point, newFigure: E) = {
