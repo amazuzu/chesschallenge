@@ -20,9 +20,16 @@ object Main extends App {
 
         val figures: Row = args(1).toList
 
-        val list = ChessBoard(m, n, figures).variants.toList
+        //val list = ChessBoard(m, n, figures).variants
+        val list = ChessBoard(m, n, figures).variantsView
 
-        println(list.length + " variants in " + Math.round((System.currentTimeMillis() - start) / 1000.0) + " seconds")
+
+        var counter: Long = 0L
+        list.foreach { el =>
+          counter += 1
+        }
+
+        println(counter + " variants in " + Math.round((System.currentTimeMillis() - start) / 1000.0) + " seconds")
 
       } else usage(s"wrong figures set '${args(1)}'")
 

@@ -9,10 +9,17 @@ import org.specs2.mutable.Specification
 trait FiguresCheck {
   self: Specification =>
 
-  def expectNReturn(variants: Stream[Figures], n: Int): Set[Set[Figure]] = {
+  def expectNReturn(variants: Flow, n: Int): Set[Set[Figure]] = {
     variants.toList.length === n
     asSet(variants)
   }
 
-  def asSet(variants: Stream[Figures]) = variants.toSet[Figures].map(_.toSet)
+  def expectNReturn2(variants: Traversable[Figures], n: Int): Set[Set[Figure]] = {
+    variants.toList.length === n
+    asSet2(variants)
+  }
+
+  def asSet(variants: Flow) = variants.toSet[Figures].map(_.toSet)
+
+  def asSet2(variants: Traversable[Figures]) = variants.toSet[Figures].map(_.toSet)
 }

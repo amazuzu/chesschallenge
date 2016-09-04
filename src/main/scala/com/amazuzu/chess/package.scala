@@ -21,5 +21,7 @@ package object chess {
 
   type Figures = List[Figure]
 
+  type Flow = Traversable[Figures]
+
 
 }

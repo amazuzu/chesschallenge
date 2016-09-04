@@ -7,48 +7,48 @@ import scala.Stream._
 /**
   * Created by taras on 9/2/16.
   */
-case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
+class ChessGameService(val M: Int, val N: Int, figures: Row) extends Printable {
 
   case class GameUncompleted(resolved: Figures, rest: Row) extends Game {
 
-    override def variants(): Stream[Figures] = rest match {
-      case h :: Nil => runSafelyThroughDesk(h)(p => (Figure(p, h) :: resolved) #:: empty)
+    override def variants(): Flow = rest match {
+      case h :: Nil => runSafelyThroughDesk(h)(p => singleFlow(Figure(p, h) :: resolved))
       case h :: tail => runSafelyThroughDesk(h)(p => GameUncompleted(Figure(p, h) :: resolved, tail).variants())
-      case Nil => resolved #:: empty
+      case Nil => singleFlow(resolved)
     }
 
   }
 
   case class GameCompleted(resolved: Figures) extends Game {
 
-    override def variants(): Stream[Figures] = runThroughDesk(resolved.head.loc)(p =>
+    override def variants(): Flow = runThroughDesk(resolved.head.loc)(p =>
       GameUncompleted(Figure(p, figures.head) :: Nil, figures.tail).variants()
     )
   }
 
 
-  def variants() = if (figures.isEmpty) Nil #:: empty
+  def variants() = if (figures.isEmpty) emptyFlow
   else GameCompleted(figures.map(Figure(Point.BeforeZero, _))).variants()
 
 
   sealed trait Game {
 
-    def variants(): Stream[Figures]
+    def variants(): Flow
 
     def resolved: Figures
 
-    protected def runThroughDesk(startPoint: Point)(closure: Point => Stream[Figures]) = {
-      def next(cursor: Point): Stream[Figures] =
-        if (isValid(cursor)) closure(cursor) #::: next(nextStep(cursor)) else empty
+    protected def runThroughDesk(startPoint: Point)(closure: Point => Flow) = {
+      def next(cursor: Point): Flow =
+        if (isValid(cursor)) closure(cursor) ++: next(nextStep(cursor)) else emptyFlow
 
       next(nextStep(startPoint))
     }
 
 
-    protected def runSafelyThroughDesk(newFigure: E)(closure: Point => Stream[Figures]) = {
-      def next(ocursor: Option[Point]): Stream[Figures] = ocursor match {
-        case Some(cursor) => closure(cursor) #::: next(findNextSafeLocation(cursor, newFigure))
-        case _ => empty
+    protected def runSafelyThroughDesk(newFigure: E)(closure: Point => Flow) = {
+      def next(ocursor: Option[Point]): Flow = ocursor match {
+        case Some(cursor) => closure(cursor) ++: next(findNextSafeLocation(cursor, newFigure))
+        case _ => emptyFlow
       }
 
       next(findNextSafeLocation(resolved.head.loc, newFigure))
@@ -83,5 +83,8 @@ case class ChessGameService(M: Int, N: Int, figures: Row) extends Printable {
 
   }
 
+  val emptyFlow: Flow = empty
+
+  def singleFlow(el: Figures): Flow = el +: empty
 
 }
