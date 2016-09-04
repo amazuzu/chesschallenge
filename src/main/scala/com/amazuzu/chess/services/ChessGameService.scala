@@ -2,8 +2,6 @@ package com.amazuzu.chess.services
 
 import com.amazuzu.chess._
 
-import scala.Stream._
-
 /**
   * Created by taras on 9/2/16.
   */
@@ -12,9 +10,9 @@ class ChessGameService(val M: Int, val N: Int, figures: Row) extends Printable {
   case class GameUncompleted(resolved: Figures, rest: Row) extends Game {
 
     override def variants(): Flow = rest match {
-      case h :: Nil => runSafelyThroughDesk(h)(p => singleFlow(Figure(p, h) :: resolved))
+      case h :: Nil => runSafelyThroughDesk(h)(p => single(Figure(p, h) :: resolved))
       case h :: tail => runSafelyThroughDesk(h)(p => GameUncompleted(Figure(p, h) :: resolved, tail).variants())
-      case Nil => singleFlow(resolved)
+      case Nil => single(resolved)
     }
 
   }
@@ -27,7 +25,7 @@ class ChessGameService(val M: Int, val N: Int, figures: Row) extends Printable {
   }
 
 
-  def variants() = if (figures.isEmpty) emptyFlow
+  def variants() = if (figures.isEmpty) empty
   else GameCompleted(figures.map(Figure(Point.BeforeZero, _))).variants()
 
 
@@ -39,7 +37,7 @@ class ChessGameService(val M: Int, val N: Int, figures: Row) extends Printable {
 
     protected def runThroughDesk(startPoint: Point)(closure: Point => Flow) = {
       def next(cursor: Point): Flow =
-        if (isValid(cursor)) closure(cursor) ++: next(nextStep(cursor)) else emptyFlow
+        if (isValid(cursor)) closure(cursor) ++: next(nextStep(cursor)) else empty
 
       next(nextStep(startPoint))
     }
@@ -48,7 +46,7 @@ class ChessGameService(val M: Int, val N: Int, figures: Row) extends Printable {
     protected def runSafelyThroughDesk(newFigure: E)(closure: Point => Flow) = {
       def next(ocursor: Option[Point]): Flow = ocursor match {
         case Some(cursor) => closure(cursor) ++: next(findNextSafeLocation(cursor, newFigure))
-        case _ => emptyFlow
+        case _ => empty
       }
 
       next(findNextSafeLocation(resolved.head.loc, newFigure))
@@ -83,8 +81,21 @@ class ChessGameService(val M: Int, val N: Int, figures: Row) extends Printable {
 
   }
 
-  val emptyFlow: Flow = empty
+  val empty: Flow = Stream.empty
 
-  def singleFlow(el: Figures): Flow = el +: empty
+  def single(el: Figures): Flow = el +: Stream.empty
+
+}
+
+class ChessGameOnViewsService(override val M: Int, override val N: Int, figures: Row)
+  extends ChessGameService(M, N, figures) {
+
+  override val empty: Flow = new Traversable[Figures] {
+    override def foreach[U](f: (Figures) => U): Unit = ()
+  }.view
+
+  override def single(el: Figures): Flow = new Traversable[Figures] {
+    override def foreach[U](f: (Figures) => U): Unit = f(el)
+  }.view
 
 }
